@@ -1,4 +1,5 @@
 <html>
+
 <head>
   <base href="/">
   <title>Watson Assistant </title>
@@ -6,7 +7,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta property="og:image" content="conversation.svg" />
   <meta property="og:title" content="Conversation Chat Simple" />
-<!--  <meta property="og:description" content="Sample application that shows how to use the Watson Assistant API to identify user intents"/> -->
+  <!--  <meta property="og:description" content="Sample application that shows how to use the Watson Assistant API to identify user intents"/> -->
   <link rel="shortcut icon" href="favicon.png" type="image/png">
   <link rel="stylesheet" href="css/app.css">
 </head>
@@ -21,18 +22,21 @@
       <div class="chat-column">
         <div id="scrollingChat"></div>
         <label for="textInput" class="inputOutline">
-          <input id="textInput" class="input responsive-column" placeholder="escriba aqui su consulta" type="text" onkeydown="ConversationPanel.inputKeyDown(event, this)" autofocus>
+          <input id="textInput" class="input responsive-column" placeholder="escriba aqui su consulta" type="text" onkeydown="ConversationPanel.inputKeyDown(event, this)"
+            autofocus>
         </label>
         <div id="input-mic-holder">
-          <div id="input-mic" class="inactive-mic" onclick="STTModule.micON()"></div>
+          <input id="start-btn" type="button" value="start recording">
+          <input id="stop-btn" type="button" value="stop recording">
+          <ul id="recordingslist"></ul>
         </div>
       </div>
     </div>
 
     <div id="payload-column" class="fixed-column content-column">
-     <div id="payload-initial-message">
-      ¿en qué lo puedo ayudar?
-    </div>
+      <div id="payload-initial-message">
+        ¿en qué lo puedo ayudar?
+      </div>
       <div id="payload-request" class="payload"></div>
       <div id="payload-response" class="payload"></div>
     </div>
@@ -42,7 +46,69 @@
   <script src="js/conversation.js"></script>
   <script src="js/payload.js"></script>
   <script src="js/global.js"></script>
-  <script type="text/javascript" src="https://cdn.rawgit.com/watson-developer-cloud/watson-developer-cloud.github.io/master/analytics.js"></script>
+  <script src="js/watson-speech.min.js"></script>
+  <!-- <script type="text/javascript" src="https://cdn.rawgit.com/watson-developer-cloud/watson-developer-cloud.github.io/master/analytics.js"></script> -->
+  <script>
+
+    function Init() {
+      toggleButtons(true)
+    }
+
+    /**
+     * 
+     */
+    function toggleButtons(isRecording) {
+      if (isRecording) {
+
+        document.getElementById("start-btn").disabled = false;
+        document.getElementById("stop-btn").disabled = true;
+      } else {
+        document.getElementById("start-btn").disabled = true;
+        document.getElementById("stop-btn").disabled = false;
+      }
+    }
+
+    /**
+     * PRIMERO EN EJECUTAR
+     */
+    window.onload = function () {
+      Init()
+
+      document.getElementById('start-btn').addEventListener("click", () => {
+
+        fetch('/api/get_audio_token')
+          .then(response => response.text())
+          .then(token => {
+
+            // Recording has started... I think
+
+            var stream = WatsonSpeech.SpeechToText.recognizeMicrophone({
+              token: token,
+              outputElement: '#textInput',
+              model: 'es-ES_BroadbandModel'
+            })
+
+            toggleButtons(false)
+
+            stream.on('error', err => {
+              console.error('[Stream()]', err)
+              // STOP
+              toggleButtons(true)
+            })
+            document.querySelector('#stop-btn').onclick = () => {
+              stream.stop()
+              // STOP
+              toggleButtons(true)
+            }
+          }).catch(error => {
+            console.error('[Fetch()]', error)
+            // STOP
+            toggleButtons(true)
+          })
+      }, false)
+    }
+
+  </script>
 </body>
 
 </html>
