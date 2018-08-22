@@ -26,8 +26,7 @@
             autofocus>
         </label>
         <div id="input-mic-holder">
-          <input id="start-btn" type="button" value="start recording">
-          <input id="stop-btn" type="button" value="stop recording">
+          <div id="input-mic" class="inactive-mic"></div>
           <ul id="recordingslist"></ul>
         </div>
       </div>
@@ -49,65 +48,35 @@
   <script src="js/watson-speech.min.js"></script>
   <!-- <script type="text/javascript" src="https://cdn.rawgit.com/watson-developer-cloud/watson-developer-cloud.github.io/master/analytics.js"></script> -->
   <script>
-
-    function Init() {
-      toggleButtons(true)
-    }
-
-    /**
-     * 
-     */
-    function toggleButtons(isRecording) {
-      if (isRecording) {
-
-        document.getElementById("start-btn").disabled = false;
-        document.getElementById("stop-btn").disabled = true;
-      } else {
-        document.getElementById("start-btn").disabled = true;
-        document.getElementById("stop-btn").disabled = false;
-      }
-    }
-
-    /**
-     * PRIMERO EN EJECUTAR
-     */
     window.onload = function () {
-      Init()
 
-      document.getElementById('start-btn').addEventListener("click", () => {
+      var stream
 
+      document.getElementById('input-mic').addEventListener("mousedown", () => {
         fetch('/api/get_audio_token')
           .then(response => response.text())
           .then(token => {
 
             // Recording has started... I think
-
-            var stream = WatsonSpeech.SpeechToText.recognizeMicrophone({
+            stream = WatsonSpeech.SpeechToText.recognizeMicrophone({
               token: token,
               outputElement: '#textInput',
               model: 'es-ES_BroadbandModel'
             })
 
-            toggleButtons(false)
-
             stream.on('error', err => {
               console.error('[Stream()]', err)
-              // STOP
-              toggleButtons(true)
             })
-            document.querySelector('#stop-btn').onclick = () => {
-              stream.stop()
-              // STOP
-              toggleButtons(true)
-            }
+
           }).catch(error => {
             console.error('[Fetch()]', error)
-            // STOP
-            toggleButtons(true)
           })
       }, false)
-    }
 
+      document.getElementById('input-mic').addEventListener("mouseup", () => {
+        stream.stop()
+      }, false)
+    }
   </script>
 </body>
 
